@@ -190,14 +190,16 @@ def ensure_folder_exist(path=''):
                 existing_path += '/{}'.format(folder)
 
 
-def remove_empty_folders(path_to_cleanup, counter=[0]):
+def remove_empty_folders(path_to_cleanup, counter=[0], root=''):
+    if not root:
+        root = path_to_cleanup
     if os.path.isdir(path_to_cleanup) and not path_to_cleanup.endswith('/'):
         path_to_cleanup += '/'
     input_folder = os.listdir(path_to_cleanup)
     for item_name in input_folder:
         if os.path.isdir(path_to_cleanup + item_name):
-            remove_empty_folders(path_to_cleanup + item_name, counter)
-    if len(os.listdir(path_to_cleanup)) == 0 and path_to_cleanup != input_path:
+            remove_empty_folders(path_to_cleanup + item_name, counter, path_to_cleanup)
+    if len(os.listdir(path_to_cleanup)) == 0 and path_to_cleanup != root:
         counter[0] = counter[0] + 1
         os.rmdir(path_to_cleanup)
     return counter

@@ -12,20 +12,53 @@ map_create_date_dict = {
     '.mp4': ['QuickTime:CreateDate'],
 }
 
+directories_to_organize2 = {
+    'Z:/Zdjecia/Adelina/Do segregacji/': 'Z:/Zdjecia/Adelina',
+    'Z:/Zdjecia/Agnieszka/Do segregacji/': 'Z:/Zdjecia/Agnieszka',
+    'Z:/Zdjecia/Bernard/Do segregacji/': 'Z:/Zdjecia/Bernard',
+    'Z:/Zdjecia/Damian/Do segregacji/': 'Z:/Zdjecia/Damian',
+    'Z:/Zdjecia/Joanna/Do segregacji/': 'Z:/Zdjecia/Joanna',
+    'Z:/Zdjecia/Natalia/Do segregacji/': 'Z:/Zdjecia/Natalia',
+    'Z:/Zdjecia/Piotrek/Do segregacji/': 'Z:/Zdjecia/Piotrek',
+    'Z:/Zdjecia/Rodzice/Do segregacji/': 'Z:/Zdjecia/Rodzice',
+    'Z:/Zdjecia/Wspolne/Do segregacji/': 'Z:/Zdjecia/Wspolne'
+}
+
+directories_to_organize = {
+    '/mnt/Z/Zdjecia/Adelina/Do segregacji/': '/mnt/Z/Zdjecia/Adelina',
+    '/mnt/Z/Zdjecia/Agnieszka/Do segregacji/': '/mnt/Z/Zdjecia/Agnieszka',
+    '/mnt/Z/Zdjecia/Bernard/Do segregacji/': '/mnt/Z/Zdjecia/Bernard',
+    '/mnt/Z/Zdjecia/Damian/Do segregacji/': '/mnt/Z/Zdjecia/Damian',
+    '/mnt/Z/Zdjecia/Joanna/Do segregacji/': '/mnt/Z/Zdjecia/Joanna',
+    '/mnt/Z/Zdjecia/Natalia/Do segregacji/': '/mnt/Z/Zdjecia/Natalia',
+    '/mnt/Z/Zdjecia/Piotrek/Do segregacji/': '/mnt/Z/Zdjecia/Piotrek',
+    '/mnt/Z/Zdjecia/Rodzice/Do segregacji/': '/mnt/Z/Zdjecia/Rodzice',
+    '/mnt/Z/Zdjecia/Wspolne/Do segregacji/': '/mnt/Z/Zdjecia/Wspolne'
+}
+
 input_path = './Input/'
 output_path = './Output/'
 initial_input_path = ''
+LOG_FILE = 'log.txt'
+et = None
 
-def organize_files_in_output_folder(input_folder_path, counter=[0]):
+def organize_files_in_output_folder(input_folder_path, root_output_path='', counter=[0]):
+    # if not root_output:
+    #     root_output = input_folder_path
+    if not root_output_path:
+        root_output_path = input_folder_path
+
     if os.path.isdir(input_folder_path) and not input_folder_path.endswith('/'):
         input_folder_path += '/'
     input_folder = os.listdir(input_folder_path)
     for item_name in input_folder:
+        # print('item name={}'.format(item_name))
         if os.path.isdir(input_folder_path + item_name):
-            organize_files_in_output_folder(input_folder_path + item_name, counter)
+            organize_files_in_output_folder(input_folder_path + item_name, root_output_path, counter)
         else:
             file_path = input_folder_path + item_name
-            new_directory = get_new_directory_based_on_date_taken(file_path)
+            # print('file_path={}'.format(file_path))
+            new_directory = get_new_directory_based_on_date_taken(file_path, root_output_path)
             if new_directory:  # image or video 'date taken' available
                 new_filepath = new_directory + item_name
                 if os.path.isfile(new_filepath):
@@ -35,11 +68,11 @@ def organize_files_in_output_folder(input_folder_path, counter=[0]):
                               'Comparison based on file size.'.format(file_path))
                         continue
                     else:  # same file name but not direct duplicate
-                        new_directory = output_path + '/Segregacja Reczna/Duplikaty/' \
-                                        + input_folder_path.replace(initial_input_path, '/')
+                        new_directory = root_output_path + '/Segregacja Reczna/Duplikaty/' \
+                                        + input_folder_path.replace(root_output_path, '/')
             else:  # missing metadata
-                new_directory = output_path + '/Segregacja Reczna/Brak Danych/' \
-                                + input_folder_path.replace(initial_input_path, '/')
+                new_directory = root_output_path + '/Segregacja Reczna/Brak Danych/' \
+                                + input_folder_path.replace(root_output_path, '/')
 
             ensure_folder_exist(new_directory)
             new_filepath = new_directory + item_name
@@ -47,7 +80,7 @@ def organize_files_in_output_folder(input_folder_path, counter=[0]):
             # bloc try/exeption can be cleaned up
             try:
                 os.rename(file_path, new_filepath)
-                print('Current file path: {} New file path: {}'.format(file_path, new_filepath))
+                print('From: {}, To: {}'.format(file_path, new_filepath))
             except FileExistsError as e:
                 # print('Problem renaming file {}, error: {}'.format(file_path, e))
                 if os.stat(file_path).st_size == os.stat(new_filepath).st_size:
@@ -80,19 +113,31 @@ def get_new_directory_based_on_date_taken(input_path='', output_folder=''):
 
         item_extension = '.{}'.format(input_path.split('.')[-1]).lower()
         key_with_date_created = map_create_date_dict.get(item_extension, None)
+        # print('key_with_date_created={}'.format(key_with_date_created))
         if key_with_date_created is None:
             print("Format \"{}\" not supported".format(item_extension))
             return None
+
+        # picture_taken_date = None
+        # metadatas = et.get_metadata(input_path)
+        # print('metadatas={}'.format(metadatas))
+        # sleep(10000)
+        # for key in key_with_date_created:
+        #     if picture_taken_date is None:
+        #         picture_taken_date = metadatas.get(key, None)
+        # print(key_with_date_created)
+        # print(picture_taken_date)
 
         from json import JSONDecodeError
         try:
             picture_taken_date = None
             metadatas = et.get_metadata(input_path)
+            # print('metadatas={}'.format(metadatas))
             for key in key_with_date_created:
                 if picture_taken_date is None:
                     picture_taken_date = metadatas.get(key, None)
-            # print(key_with_date_created)
-            # print(picture_taken_date)
+            print(key_with_date_created)
+            print(picture_taken_date)
         except JSONDecodeError:
             from PIL import Image, ExifTags
             try:
@@ -113,10 +158,10 @@ def get_new_directory_based_on_date_taken(input_path='', output_folder=''):
             # print('Final date taken by PIL library: {}'.format(picture_taken_date))
             # print('Available tags form PIL library:')
             # print(exif)
-        except:
-            picture_taken_date = None
-            e = sys.exc_info()[0]
-            print('Error: {}'.format(e))
+        # except:
+        #     picture_taken_date = None
+        #     e = sys.exc_info()[0]
+        #     print('Error: {}'.format(e))
 
         if not picture_taken_date or picture_taken_date.isspace():
             print("File \"{}\" has missing date attribute.".format(os.path.abspath(input_path)))
@@ -133,7 +178,7 @@ def get_new_directory_based_on_date_taken(input_path='', output_folder=''):
 
 def ensure_folder_exist(path=''):
     if not path:
-        return None;
+        return None
     else:
         split_path = path.split('/\\')
         existing_path = split_path[0]
@@ -182,85 +227,93 @@ def get_set_of_all_files(folder_path='', result={}, counter=0):
 
     return result
 
-print('''
-=============================================================================
-|  This program organizes pictures based on their exif data.                |
-|  Program moves files from input location to the output location.          |
-|  Inside output location program creates folders structure as follows:     |
-|  Output/Year/Month                                                        |
-|  For example Output/2019/0245                                             |
-|  All pictures which were taken that month will be moved to this location  |
-============================================================================|
-''')
-print('''Insert input folder path. Examples: 
-D:/Pictures/Input
-./Input
-''')
-is_user_input_correct = False
-input_path = input('Input folder path: ')
-input_path = input_path.replace('\\', '/')
-canceled = False
-while not os.path.isdir(input_path) and not canceled:
-    print('Folder does not exist')
-    input_path = input('Reenter input path or type \"exit\" to terminate: ')
+def run_as_cli():
+    print('''
+    =============================================================================
+    |  This program organizes pictures based on their exif data.                |
+    |  Program moves files from input location to the output location.          |
+    |  Inside output location program creates folders structure as follows:     |
+    |  Output/Year/Month                                                        |
+    |  For example Output/2019/0245                                             |
+    |  All pictures which were taken that month will be moved to this location  |
+    ============================================================================|
+    ''')
+    print('''Insert input folder path. Examples:
+    D:/Pictures/Input
+    ./Input
+    ''')
+    is_user_input_correct = False
+    input_path = input('Input folder path: ')
     input_path = input_path.replace('\\', '/')
-    if input_path.lower() == 'exit':
-        canceled = True
-
-if not canceled:
-    initial_input_path = input_path
-    output_path = input('Output folder path: ')
-    output_path = output_path.replace('\\', '/')
-    while not os.path.isdir(output_path) and not canceled:
+    canceled = False
+    while not os.path.isdir(input_path) and not canceled:
         print('Folder does not exist')
-        output_path = input('Reenter output path or type \"exit\" to terminate: ')
-        output_path = output_path.replace('\\', '/')
-        if output_path.lower() == 'exit':
+        input_path = input('Reenter input path or type \"exit\" to terminate: ')
+        input_path = input_path.replace('\\', '/')
+        if input_path.lower() == 'exit':
             canceled = True
 
-if not canceled:
-    print('All files new paths:')
+    if not canceled:
+        initial_input_path = input_path
+        output_path = input('Output folder path: ')
+        output_path = output_path.replace('\\', '/')
+        while not os.path.isdir(output_path) and not canceled:
+            print('Folder does not exist')
+            output_path = input('Reenter output path or type \"exit\" to terminate: ')
+            output_path = output_path.replace('\\', '/')
+            if output_path.lower() == 'exit':
+                canceled = True
+
+    if not canceled:
+        print('All files new paths:')
+        stopwatch_start = time.time()
+        with exiftool.ExifTool() as et:
+            files_moved = organize_files_in_output_folder(input_path)
+            print("Files segregated: {}".format(files_moved))
+
+        file_removed_count = remove_empty_folders(input_path, [0])
+        print('{} empty folders in Input folder removed.'.format(file_removed_count))
+        print('Operation took {} seconds'.format(time.time() - stopwatch_start))
+        input('Press any key to exit')
+
+def get_path_with_slashes(path):
+    return path.replace('\\', '/')
+
+def is_directory_path(path):
+    return os.path.isdir(path)
+
+def organize_photos(input_path, output_path):
+    slash_path = get_path_with_slashes(input_path)
+    if not is_directory_path(slash_path):
+        print (slash_path + ' is not directory')
+        return
+
     stopwatch_start = time.time()
-    with exiftool.ExifTool() as et:
-        files_moved = organize_files_in_output_folder(input_path)
+    with exiftool.ExifTool() as exift:
+        global et
+        et = exift 
+        files_moved = organize_files_in_output_folder(input_path, output_path)
         print("Files segregated: {}".format(files_moved))
 
     file_removed_count = remove_empty_folders(input_path, [0])
     print('{} empty folders in Input folder removed.'.format(file_removed_count))
-    print('Operation took {} seconds'.format(time.time() - stopwatch_start))
-    input('Press any key to exit')
+    print('Operation took {} seconds'.format(
+        time.time() - stopwatch_start))
+
+def organize_registered_folders():
+    print('in method organize_registered_folders')
+    for key in directories_to_organize:
+        print('processing: ' + key)
+        input_dir_path = key
+        output_dir_path = directories_to_organize[key]
+        organize_photos(input_dir_path, output_dir_path)
 
 '''
-#print('all files:')
-result_old = get_set_of_all_files('S:/Dom/Zdjęcia/Damian')
-#print(result)
-#print()
-print('Set of all keys [old]:')
-old_keys = result_old.keys()
-old_set_of_keys = set(old_keys)
-print(old_set_of_keys)
-old_files_count = len(old_keys)
-print('old files count: {}'.format(old_files_count))
+def log(input):
+    log_file_path =  + '/' + LOG_FILE
+    with open(log_file_path, 'a') as myfile:
+        myfile.write("input")
+        '''
 
-result_new = get_set_of_all_files('C:/Users/Damian/Pictures/Photos/Damian')
-print('Set of all keys [new]:')
-new_keys = result_new.keys()
-new_set_of_keys = set(new_keys)
-print(new_set_of_keys)
-new_files_count = len(new_keys)
-print('new files count: {}'.format(new_files_count))
-
-print('Difference between sets:')
-difference = new_set_of_keys.difference(old_set_of_keys)
-diferent_files_count = len(difference)
-print(difference)
-
-for set_key in difference:
-    print(result_new[set_key])
-
-print('Summary:')
-print('Old files count: {}'.format(old_files_count))
-print('New files count: {}'.format(new_files_count))
-print('Deference count: {}'.format(diferent_files_count))
-'''
-
+if __name__ == "__main__":
+   run_as_cli()

@@ -182,7 +182,7 @@ def get_new_directory_based_on_date_taken(input_path='', output_folder=''):
 
         subfolder = subfolder_for_extension.get(item_extension, None)
 
-        result = output_folder + date_split[0] + '/' + date_split[1] + subfolder
+        result = output_folder + date_split[0] + '/' + date_split[1] + '/' + subfolder
         return result
 
 

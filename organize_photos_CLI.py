@@ -10,6 +10,7 @@ map_create_date_dict = {
     '.jpg': ['EXIF:CreateDate', 'DateTimeOriginal'],
     '.mov': ['QuickTime:CreateDate'],
     '.mp4': ['QuickTime:CreateDate'],
+    '.orf': ['EXIF:CreateDate'],
 }
 
 directories_to_organize2 = {
@@ -293,7 +294,7 @@ def organize_photos(input_path, output_path):
     stopwatch_start = time.time()
     with exiftool.ExifTool() as exift:
         global et
-        et = exift 
+        et = exift
         files_moved = organize_files_in_output_folder(input_path, output_path)
         print("Files segregated: {}".format(files_moved))
 

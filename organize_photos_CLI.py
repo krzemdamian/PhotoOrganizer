@@ -13,6 +13,13 @@ map_create_date_dict = {
     '.orf': ['EXIF:CreateDate'],
 }
 
+subfolder_for_extension = {
+    '.jpg': '',
+    '.mov': '',
+    '.mp4': '',
+    '.orf': 'RAW/',
+}
+
 directories_to_organize2 = {
     'Z:/Zdjecia/Adelina/Do segregacji/': 'Z:/Zdjecia/Adelina',
     'Z:/Zdjecia/Agnieszka/Do segregacji/': 'Z:/Zdjecia/Agnieszka',
@@ -173,7 +180,9 @@ def get_new_directory_based_on_date_taken(input_path='', output_folder=''):
         if int(date_split[0]) < 2008:  # check if wrong date on camera was set
             return None
 
-        result = output_folder + date_split[0] + '/' + date_split[1] + '/'
+        subfolder = subfolder_for_extension.get(item_extension, None)
+
+        result = output_folder + date_split[0] + '/' + date_split[1] + subfolder
         return result
 
 
